@@ -7,8 +7,6 @@ import seaborn as sns
 import matplotlib.colors as colors
 
 
-
-health = pd.read_csv("C:\\Users\\zkdlt\\Documents\\GitHub\\Project\\medical_project\\docs\\보건복지부_전국 지역보건의료기관 현황_20191231.csv", encoding='cp949')
 medical = pd.read_csv("C:\\Users\\zkdlt\\Documents\\GitHub\\Project\\medical_project\\docs\\전국의료기관표준데이터.csv", encoding='cp949')
 # CSV 불러오기
 
@@ -30,6 +28,23 @@ plt.figure(figsize=(12, 6))
 medical_df.plot(kind='pie', autopct='%.1f%%', startangle=90)
 plt.title("전국 의료기관 영업상태")
 plt.ylabel("") # 원형 그래프에선 y축 라벨 필요없음
+plt.tight_layout()
+plt.show()
+
+# 지역(특별, 광역, 도, 시) 기준으로 병원 영업 상태 비교 도출
+
+# 우선 지역 전처리 (시도 , 시군구)
+
+medical['시도'] = medical['소재지전체주소']
+
+city_med = medical.groupby(['시도', '영업상태명']).size().unstack()
+
+plt.figure(figsize=(12, 6))
+city_med.plt(kind='bar', stacked=True)
+plt.title("지역별 병원 영업상태 비교")
+plt.xlabel("시도")
+plt.ylabel("병원 수")
+plt.xticks(rotation=45)
 plt.tight_layout()
 plt.show()
 
