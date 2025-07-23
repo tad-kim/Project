@@ -35,12 +35,23 @@ print(medical[['소재지전체주소', '시도', '시군구']])
 #   2. 특정 지역에 없는 또는 희귀한 진료과목은
 #   3. 도시 와 지방 간 진료 종류 또는 진료수의 차이
 
-# 미션 1 시도별 진료과목 종류 수
+# 1. 시도별 진료과목 종류 수
 
 # 결측 제거
 filtered = medical.dropna(subset=['진료과목내용명', '시도'])
 # dropna 는 결측값이 있는 행이나 열을 제거하는 pandas 함수
 # subset 인자를 사용한 이유는 원하는 진료과목 또는 시도별 결측값이 하나라도 있다면 제거요청
 
+# 진료 분리
+filtered['진료과목리스트'] = filtered['진료과목내용명'].str.split()
 
+# explode로 병원 진료 단위로 확장
+exploded = filtered.explode['진료과목리스트']
+
+# 시도별 진료과목 수
+subject_sido = exploded.groupbyO(['시도', '진료과목리스트']).size().reset_index(name='conut')
+
+# 시각화 작업
+# 한글 폰트 
+plt.rc('font', family='Malgun Gothic')
 
