@@ -45,9 +45,9 @@ medical['시군구'] = medical['소재지전체주소'].str.extract(r'(\w+구|\w
 
 # 광역지역 (시도) 영업상태 분석
 exclude_sido = ['죽도', '상도']
-medical = medical[~medical['시도'].isin(exclude_sido)]
+medical_df = medical[~medical['시도'].isin(exclude_sido)]
 
-city_med = medical.groupby(['시도', '영업상태명']).size().unstack(fill_value=0)
+city_med = medical_df.groupby(['시도', '영업상태명']).size().unstack(fill_value=0)
 
 city_med = city_med.loc[city_med.sum(axis=1).sort_values(ascending=False).index]
 
@@ -94,6 +94,78 @@ for group_name, sido in province_group.items():
 
     # 진료과목별 폐업 현황 분석
 
+# 폐업 병원 추출
 
+colsed = medical[medical['영업상태명'] == '폐업']
+
+# 진료과목 분해
+
+# ','로 나누고 행마다 나열하기 위한 작업
+closed_sub = closed['진료과목내용명'].dropna().str.split(',').explode()
+
+# 공백 제거
+closed_sub = closed_sub.str.strip()
+
+# 진료 과목 집계
+sub_count = closed_sub.value_counts()
+
+# 진료과목별 TOP 15 그래프 도출
+
+top_medical = sub_count.head(15)
+
+top_medical.plot(kind='barh', figsize=(12, 6))
+plt.title("폐업 병원 진료과목 TOP 15 (부수과목 포함)")
+plt.xlabel("폐업된 병원 수")
+plt.ylabel("진료과목")
+plt.tight_layout()
+plt.grid(axis='y')
+plt.show()
+
+# 특정 진료과목 지역별 공백 분석
+#  정상 영업 병원 필터링
+
+opened = medical[medical['영업상태명'] == '영업/정상']
+
+sanbu_open = opened[opened['진료과목내용명'].str.contains('산부인과', na=False)]
+# 산부인과 병원 수 확인
+region_sanbu = sanbu_open.groupby(['시도', '시군구']).size().reset_index(name='산부인과수')
+
+# 진료과목 분해 및 pivot 생성
+
+open_sub = opened[['시도', '시군구', '진료과목내용명']].dropna()
+open_sub = open_sub.assign(진료과목=open_sub['진료과목내용명'].str.split(',')).explode('진료과목')
+open_sub['진료과목'] = open_sub['진료과목'].str.strip()
+
+# .assign(). explode() 는 콤마로 합쳐진 진료과목을 하나하나의 행으로 풀어주는역할
+
+province_groups = {
+    "경기도": ["경기도"],
+    "강원도": ["강원특별자치도"],
+    "충청도": ["충청북도", "충청남도"],
+    "전라도": ["전라북도", "전라남도"],
+    "경상도": ["경상북도", "경상남도"]
+}
+
+
+# 산부인과 병원 수 집계 (시도+시군구)
+sanbu_counts = open_sub[open_sub['진료과목'] == '산부인과'].groupby(['시도', '시군구']).size().reset_index(name='산부인과수')
+
+# 시각화용 인덱스 추가
+sanbu_counts['지역'] = sanbu_counts['시도'] + ' ' + sanbu_counts['시군구']
+sanbu_counts = sanbu_counts.set_index('지역')
+
+# 지역별 산부인과 병원 수 히트맵 (권역별로 나누기)
+for g_name, sido_list in province_groups.items():
+    # 해당 권역에 포함된 데이터만 필터링
+    region_df = sanbu_counts[sanbu_counts.index.str.contains('|'.join(sido_list))]
+
+    if not region_df.empty:
+        plt.figure(figsize=(6, len(region_df) * 0.4 + 2))
+        sns.heatmap(region_df[['산부인과수']], cmap='Reds', annot=True, fmt=".0f", linewidths=0.5, linecolor='gray')
+        plt.title(f"{g_name} 산부인과 병원 수 (시도+시군구 기준)")
+        plt.xlabel("산부인과")
+        plt.ylabel("지역")
+        plt.tight_layout()
+        plt.show()
 
 
