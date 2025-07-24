@@ -130,7 +130,7 @@ sanbu_open = opened[opened['진료과목내용명'].str.contains('산부인과',
 # 산부인과 병원 수 확인
 region_sanbu = sanbu_open.groupby(['시도', '시군구']).size().reset_index(name='산부인과수')
 
-# 진료과목 분해 및 pivot 생성
+# 진료과목 분해 
 
 open_sub = opened[['시도', '시군구', '진료과목내용명']].dropna()
 open_sub = open_sub.assign(진료과목=open_sub['진료과목내용명'].str.split(',')).explode('진료과목')
